@@ -1,3 +1,4 @@
+import json
 from slack_sdk import WebClient
 import os
 from pathlib import Path
@@ -11,39 +12,133 @@ env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 slack_token = os.environ['SLACK_TOKEN']
+verification_token = os.environ['VERIFICATION_TOKEN']
 client = WebClient(slack_token)
 
 pagerduty_api_token = os.environ['PAGERDUTY_TOKEN']
 schedule_id = os.environ['SCHEDULE_ID']
 
-_userHelper = SlackUserHelper(slack_token, pagerduty_api_token, schedule_id)
+_helper = SlackUserHelper(slack_token, pagerduty_api_token, schedule_id)
 
-# @app.route('/my-email', methods=['POST'])
-# def my_email():
-#     data = request.form
-#     user_id = data.get('user_id')
-#     channel_id = data.get('channel_id')
+modal_payload = {
+    "type": "modal",
+    "callback_id": "modal-identifier",
+    "title": {
+        "type": "plain_text",
+        "text": "Schedule Swap"
+    },
+    "blocks": [
+        {
+            "type": "section",
+            "block_id": "section-identifier-1",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Current Schedule Start Date"
+            },
+            "accessory": {
+                "type": "datepicker",
+                "initial_date": "2023-09-01",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a date"
+                },
+                "action_id": "start_date_1"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-2",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Current Schedule End Date"
+            },
+            "accessory": {
+                "type": "datepicker",
+                "initial_date": "2023-09-30",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a date"
+                },
+                "action_id": "end_date_1"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-6",
+            "text": {
+                "type": "mrkdwn",
+                "text": "User to Swap With"
+            },
+            "accessory": {
+                "type": "users_select",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a user"
+                },
+                "action_id": "selected_user_2"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-4",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Desired Schedule Start Date"
+            },
+            "accessory": {
+                "type": "datepicker",
+                "initial_date": "2023-09-01",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a date"
+                },
+                "action_id": "start_date_2"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-5",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Desired Schedule End Date"
+            },
+            "accessory": {
+                "type": "datepicker",
+                "initial_date": "2023-09-30",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a date"
+                },
+                "action_id": "end_date_2"
+            }
+        }
+    ],
+    "close": {
+        "type": "plain_text",
+        "text": "Cancel"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "Submit"
+    },
+}
     
-#     userEmail = _userHelper.get_user_email(user_id)
-
-#     if userEmail is not None:
-#         message_text = "Your email is " + userEmail
-#         client.chat_postEphemeral(channel= channel_id, user=user_id, text=message_text)
-#         return Response(), 200
-#     else:
-#         message_text = "Unable to retrieve the user's email."
-#         client.chat_postEphemeral(channel= channel_id, user=user_id, text=message_text)
-#         return Response(), 500
-    
-@app.route('/my-id', methods=['POST'])
+@app.route('/pagerduty-id', methods=['POST'])
 def my_id():
     data = request.form
     user_id = data.get('user_id')
     channel_id = data.get('channel_id')
-    pg_id = _userHelper.get_pagerduty_id(user_id)
+    token = data.get('token')
+    pg_id = _helper.get_pagerduty_id(user_id)
+    
+    # Authorization Check
+    if not _helper.ValidateOrigin(token, verification_token):
+        message_text = "Failed to validate request, talk to system administrator!"
+        client.chat_postEphemeral(channel= channel_id, user=user_id, text=message_text)
+        return Response(), 401
     
     if pg_id != None:
-        message_text = "Your PgId is " + pg_id
+        message_text = "Your Pagerduty Id is: " + pg_id
         client.chat_postEphemeral(channel= channel_id, user=user_id, text=message_text)
         return Response(), 200
     else:
@@ -51,14 +146,26 @@ def my_id():
         client.chat_postEphemeral(channel= channel_id, user=user_id, text=message_text)
         return Response(), 500
     
-@app.route('/my-next-shift', methods=['POST'])
+@app.route('/pagerduty-me', methods=['POST'])
 def my_next_shift():
     data = request.form
     user_id = data.get('user_id')
     channel_id = data.get('channel_id')
-    pg_id = _userHelper.get_pagerduty_id(user_id)
+    token = data.get('token')
+    pg_id = _helper.get_pagerduty_id(user_id)
     
-
+    # Authorization Check
+    if not _helper.ValidateOrigin(token, verification_token):
+        message_text = "Failed to validate request, talk to system administrator!"
+        client.chat_postEphemeral(channel= channel_id, user=user_id, text=message_text)
+        return Response(), 401
+    
+    schedule =_helper.get_users_on_call_schedule(pg_id)
+    
+    header = "Here is your on call schedule for the next 3 months:\n"
+    formatted_message = _helper.format_schedule_message(schedule)
+    
+    client.chat_postEphemeral(channel= channel_id, user=user_id, text=header + "\n" + formatted_message)
     
     return Response(), 200
 
@@ -67,18 +174,67 @@ def pagerduty_list():
     data = request.form
     user_id = data.get('user_id')
     channel_id = data.get('channel_id')
+    token = data.get('token')
     
-    schedules = _userHelper.get_oncall_schedules()
+    # Authorization Check
+    if not _helper.ValidateOrigin(token, verification_token):
+        message_text = "Failed to validate request, talk to system administrator!"
+        client.chat_postEphemeral(channel= channel_id, user=user_id, text=message_text)
+        return Response(), 401
+    
+    schedules = _helper.get_oncall_schedules()
     
     header = "Here is the on-call schedule for the next 3 months:\n"
-
-    formatted_message = _userHelper.format_schedule_message(schedules)
+    formatted_message = _helper.format_schedule_message(schedules)
     
     client.chat_postEphemeral(channel= channel_id, user=user_id, text=header + "\n" + formatted_message)
 
     return Response(), 200
-    
+
+@app.route('/pagerduty-swap', methods=['POST'])
+def open_advanced_menu():
+    data = request.form
+    user_id = data.get('user_id')
+    trigger_id = data.get('trigger_id')
+
+    channel_id = data.get('channel_id')
+    # users_in_channel = _helper.get_users_in_channel(channel_id)
+
+    try:
+        client.views_open(
+            trigger_id=trigger_id,
+            view=modal_payload
+        )
+
+    except Exception as e:
+        print(f"Error opening advanced modal: {str(e)}")
+
+    return Response(), 200
+
+@app.route('/submit-swap', methods=['POST'])
+def submit_swap():
+    try:
+        payload = json.loads(request.form.get('payload'))
+
+        user_id = payload['user']['id']
+        submission_values = payload['view']['state']['values']
+
+        # Extract values from the submission
+        start_date_1 = submission_values['section-identifier-1']['start_date_1']['selected_date']
+        end_date_1 = submission_values['section-identifier-2']['end_date_1']['selected_date']
+        target_user_id = submission_values['section-identifier-6']['selected_user_2']['selected_user']
+        start_date_2 = submission_values['section-identifier-4']['start_date_2']['selected_date']
+        end_date_2 = submission_values['section-identifier-5']['end_date_2']['selected_date']
+
+        # Process the submitted data and perform the schedule swap
+
+        return Response(), 200
+
+    except Exception as e:
+        # Handle exceptions here, e.g., log the error
+        print(f"Error handling form submission: {str(e)}")
+        return Response(), 500
+     
 if __name__ == "__main__":
-    # print(_userHelper.get_oncall_schedules())
     app.run(debug=True, port=80)
     
