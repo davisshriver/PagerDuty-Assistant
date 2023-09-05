@@ -139,10 +139,10 @@ class SlackUserHelper:
         else:
             return False
     
-    def get_users_in_channel(self, channel_id):
+    def get_users_in_channel(channel_id):
 
         try:
-            response = self._slack_client.conversations_members(channel=channel_id)
+            response = _slack_client.conversations_members(channel=channel_id)
             if response["ok"]:
                 return response["members"]
             else:
