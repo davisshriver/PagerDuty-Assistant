@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -20,6 +21,16 @@ app = web.Application()
 
 client = WebClient(_slack_token)
 _helper = SlackUserHelper(_slack_token, _pagerduty_api_token, _schedule_id)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.ERROR,  
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler(),  # Log to the console
+    ],
+)
+
 
 with open('modal_payload.json', 'r') as file:
      modal_payload = json.load(file)
@@ -104,7 +115,7 @@ async def open_advanced_menu(request):
         )
 
     except Exception as e:
-        print(f"Error opening advanced modal: {str(e)}")
+        logging.error(f"Error opening advanced modal: {str(e)}")
 
     return web.Response(text='', status=200)
 
@@ -113,20 +124,19 @@ async def submit_swap(request):
         data = await request.post()
         payload = json.loads(data.get('payload', {}))
 
+        # The payload is from a view submission, meaning the "Submit" button was clicked
         if 'type' in payload and payload['type'] == 'view_submission':
-            # The payload is from a view submission, meaning the "Submit" button was clicked
             asyncio.create_task(process_submission(payload))
             return web.Response(status=200)
 
     except Exception as e:
-        print(f"Error while processing submission: {str(e)}")
+        logging.error(f"Error while processing submission: {str(e)}")
         return web.Response(status=500)
 
     return web.Response()
 
 async def process_submission(payload):
     try:
-        # The payload is from a view submission, meaning the "Submit" button was clicked
         user_id = payload['user']['id']
         submission_values = payload['view']['state']['values']
 
@@ -196,7 +206,7 @@ async def process_submission(payload):
 
     except Exception as e:
         # Handle exceptions here, e.g., log the error
-        print(f"Error while creating override: {str(e)}")
+        logging.error(f"Error while creating override: {str(e)}")
         return web.Response(status=500)
 
     # Return a 200 response for other cases
@@ -214,12 +224,14 @@ async def create_overrides(overrides_data):
             }
         ) as response:
             return response.status
-
+        
+# Set up routes
 app.router.add_post('/pagerduty-id', my_id)
 app.router.add_post('/pagerduty-me', my_next_shift)
 app.router.add_post('/pagerduty-list', pagerduty_list)
 app.router.add_post('/pagerduty-swap', open_advanced_menu)
 app.router.add_post('/submit-swap', submit_swap)
 
+# Start application
 if __name__ == "__main__":
     web.run_app(app, host="0.0.0.0", port=80)
