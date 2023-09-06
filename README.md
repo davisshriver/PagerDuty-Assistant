@@ -1,5 +1,15 @@
-# Slack-Pagerduty-Bot
+# PagerDuty-Assitant
+"PagerDuty Assistant" is a powerful and user-friendly web application designed to streamline the process of managing your PagerDuty schedule within Slack. With PagerDuty Assistant, accessing your on-call schedule, retrieving essential information from PagerDuty, and creating schedule overrides has never been easier or more efficient.
 
+### Key Features:
+
+Instant Schedule Access: PagerDuty Assistant provides instant access to your on-call schedule, allowing you to view your upcoming shifts for the next three months effortlessly. Say goodbye to the hassle of navigating through PagerDuty's interface.
+
+PagerDuty Information at Your Fingertips: Quickly gather important information from PagerDuty, such as your PagerDuty ID, on-call schedule details, and team members' schedules, all from within your Slack workspace. No need to switch between platforms or perform lengthy searches.
+
+Effortless Schedule Overrides: When unexpected situations arise that prevent you from being on call, PagerDuty Assistant simplifies the process of creating schedule overrides. Easily create schedule overrides with just a few clicks, ensuring seamless coverage and minimal disruption.
+
+PagerDuty Assistant is your go-to solution for making PagerDuty management a breeze, saving you time and effort so you can focus on what matters most. Say hello to a more efficient on-call experience with PagerDuty Assistant!
 # Helper Functions
 ## get_pagerduty_id(slack_id)
 This function retrieves a PagerDuty ID for a Slack user based on their Slack user ID.
