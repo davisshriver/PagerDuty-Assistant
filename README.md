@@ -10,7 +10,9 @@ PagerDuty Information at Your Fingertips: Quickly gather important information f
 Effortless Schedule Overrides: When unexpected situations arise that prevent you from being on call, PagerDuty Assistant simplifies the process of creating schedule overrides. Easily create schedule overrides with just a few clicks, ensuring seamless coverage and minimal disruption.
 
 PagerDuty Assistant is your go-to solution for making PagerDuty management a breeze, saving you time and effort so you can focus on what matters most. Say hello to a more efficient on-call experience with PagerDuty Assistant!
-# Helper Functions
+# Documentation
+
+## Helper Functions
 ## get_pagerduty_id(slack_id)
 This function retrieves a PagerDuty ID for a Slack user based on their Slack user ID.
 
