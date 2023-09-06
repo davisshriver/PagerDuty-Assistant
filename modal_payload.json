@@ -1,0 +1,170 @@
+{
+    "type": "modal",
+    "callback_id": "modal-identifier",
+    "title": {
+        "type": "plain_text",
+        "text": "Schedule Swap"
+    },
+    "blocks": [
+        {
+            "type": "section",
+            "block_id": "section-identifier-1",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Current Schedule Start Date"
+            },
+            "accessory": {
+                "type": "datepicker",
+                "initial_date": "2023-09-01",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a date"
+                },
+                "action_id": "start_date_1"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-8",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Current Schedule Start Time"
+            },
+            "accessory": {
+                "type": "timepicker",
+                "initial_time": "08:00",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a time"
+                },
+                "action_id": "start_time_1"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-2",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Current Schedule End Date"
+            },
+            "accessory": {
+                "type": "datepicker",
+                "initial_date": "2023-09-30",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a date"
+                },
+                "action_id": "end_date_1"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-9",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Current Schedule End Time"
+            },
+            "accessory": {
+                "type": "timepicker",
+                "initial_time": "17:00",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a time"
+                },
+                "action_id": "end_time_1"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-6",
+            "text": {
+                "type": "mrkdwn",
+                "text": "User to Swap With"
+            },
+            "accessory": {
+                "type": "users_select",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a user"
+                },
+                "action_id": "selected_user_2"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-4",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Desired Schedule Start Date"
+            },
+            "accessory": {
+                "type": "datepicker",
+                "initial_date": "2023-09-01",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a date"
+                },
+                "action_id": "start_date_2"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-10",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Desired Schedule Start Time"
+            },
+            "accessory": {
+                "type": "timepicker",
+                "initial_time": "08:00",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a time"
+                },
+                "action_id": "start_time_2"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-5",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Desired Schedule End Date"
+            },
+            "accessory": {
+                "type": "datepicker",
+                "initial_date": "2023-09-30",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a date"
+                },
+                "action_id": "end_date_2"
+            }
+        },
+        {
+            "type": "section",
+            "block_id": "section-identifier-11",
+            "text": {
+                "type": "mrkdwn",
+                "text": "Desired Schedule End Time"
+            },
+            "accessory": {
+                "type": "timepicker",
+                "initial_time": "17:00",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select a time"
+                },
+                "action_id": "end_time_2"
+            }
+        }
+    ],
+    "close": {
+        "type": "plain_text",
+        "text": "Cancel"
+    },
+    "submit": {
+        "type": "plain_text",
+        "text": "Submit"
+    }  
+}
