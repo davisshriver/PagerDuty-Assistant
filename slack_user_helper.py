@@ -1,5 +1,6 @@
 import datetime
 import requests
+import pytz
 from slack_sdk import WebClient
 
 class SlackUserHelper:
@@ -40,7 +41,7 @@ class SlackUserHelper:
         except Exception as e:
             print(f"Error retrieving Pagerduty Id: {str(e)}")
             return None
-        
+          
     def get_oncall_schedules(self):
         today = datetime.datetime.today()
         three_months_later = today + datetime.timedelta(days=90)
@@ -64,11 +65,13 @@ class SlackUserHelper:
 
             for oncall_entry in oncall_data['oncalls']:
                 user_info = oncall_entry['user']
+                user_id = user_info['id']  
                 user_name = user_info['summary']  
                 user_start_date = oncall_entry['start']
                 user_end_date = oncall_entry['end']
 
                 user_schedules.append({
+                    'id' : user_id,
                     'user_name': user_name,
                     'start_date': user_start_date,
                     'end_date': user_end_date
@@ -133,36 +136,48 @@ class SlackUserHelper:
         return formatted_message
     
     @staticmethod  
-    def ValidateOrigin(validation_token, request_token):
+    def validate_origin(validation_token, request_token):
         if validation_token == request_token:
             return True
         else:
             return False
-    
-    def get_users_in_channel(channel_id):
+        
+    @staticmethod    
+    def validate_schedule(self, schedule_data):
+        user_schedule = self.get_oncall_schedules()
 
-        try:
-            response = _slack_client.conversations_members(channel=channel_id)
-            if response["ok"]:
-                return response["members"]
-            else:
-                print(f"Error: {response['error']}")
-                return []
+        for entry in schedule_data:
+            user_id, start_time, end_time = entry
 
-        except Exception as e:
-            print(f"Error fetching channel members: {str(e)}")
-            return []
+            # Check if the provided date and time range is valid in the user's schedule
+            valid_date_time_range = self.validate_date_time_range(user_id, start_time, end_time, user_schedule)
+
+            # If any date and time range or user ID is not valid, return False
+            if not valid_date_time_range:
+                return False
+
+        # All date and time ranges and user IDs are valid
+        return True
     
+    @staticmethod  
+    def validate_date_time_range(user_id, start_datetime, end_datetime, user_schedule):
+        start_datetime = datetime.datetime.fromisoformat(start_datetime)
+        end_datetime = datetime.datetime.fromisoformat(end_datetime)
+        
+        # Set to UTC
+        utc = pytz.UTC
+        start_datetime = start_datetime.astimezone(utc)
+        end_datetime = start_datetime.astimezone(utc)
+
+        for schedule_entry in user_schedule:
+            if (
+                schedule_entry['id'] == user_id
+                and datetime.datetime.fromisoformat(schedule_entry['start_date']) <= start_datetime
+                and datetime.datetime.fromisoformat(schedule_entry['end_date']) >= end_datetime
+            ):
+                return True
+
+        # The date and time range is not valid or doesn't match the user_id in the user's schedule
+        return False
+        
     
-    # def get_user_email(self, user_id):
-    #     try:
-    #         # Call the users.info API to retrieve user information, including email
-    #         user_info = self.slack_client.users_profile_get(user=user_id)
-            
-    #         # Extract the email address from the user_info response
-    #         email = user_info['profile']['email']
-            
-    #         return email
-    #     except Exception as e:
-    #         print(f"Error retrieving user email: {str(e)}")
-    #         return None

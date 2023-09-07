@@ -15,7 +15,7 @@ _slack_token = os.environ['SLACK_TOKEN']
 _verification_token = os.environ['VERIFICATION_TOKEN']
 _pagerduty_api_token = os.environ['PAGERDUTY_TOKEN']
 _schedule_id = os.environ['SCHEDULE_ID']
-_channel_id = ""
+_channel_id = os.environ['CHANNEL_ID']
 
 app = web.Application()
 
@@ -43,7 +43,7 @@ async def my_id(request):
     pg_id = _helper.get_pagerduty_id(user_id)
 
     # Authorization Check
-    if not _helper.ValidateOrigin(token, _verification_token):
+    if not _helper.validate_origin(token, _verification_token):
         message_text = "Failed to validate request, talk to system administrator!"
         client.chat_postEphemeral(channel=channel_id, user=user_id, text=message_text)
         return web.Response(status=401)
@@ -65,7 +65,7 @@ async def my_next_shift(request):
     pg_id = _helper.get_pagerduty_id(user_id)
 
     # Authorization Check
-    if not _helper.ValidateOrigin(token, _verification_token):
+    if not _helper.validate_origin(token, _verification_token):
         message_text = "Failed to validate request, talk to system administrator!"
         client.chat_postEphemeral(channel=channel_id, user=user_id, text=message_text)
         return web.Response(status=401)
@@ -86,7 +86,7 @@ async def pagerduty_list(request):
     token = data.get('token')
 
     # Authorization Check
-    if not _helper.ValidateOrigin(token, _verification_token):
+    if not _helper.validate_origin(token, _verification_token):
         message_text = "Failed to validate request, talk to system administrator!"
         client.chat_postEphemeral(channel=channel_id, user=user_id, text=message_text)
         return web.Response(status=401)
@@ -103,11 +103,15 @@ async def pagerduty_list(request):
 async def open_advanced_menu(request):
     data = await request.post()
     trigger_id = data.get('trigger_id')
-    channel_id = data.get('channel_id')
+    user_id = data.get('user_id')
+    token = data.get('token')
     
-    global _channel_id 
-    _channel_id = channel_id # Update channel ID for the response messages
-
+    # Authorization Check
+    if not _helper.validate_origin(token, _verification_token):
+        message_text = "Failed to validate request, talk to system administrator!"
+        client.chat_postEphemeral(channel=_channel_id, user=user_id, text=message_text)
+        return web.Response(status=401)
+    
     try:
         client.views_open(
             trigger_id=trigger_id,
@@ -116,13 +120,21 @@ async def open_advanced_menu(request):
 
     except Exception as e:
         logging.error(f"Error opening advanced modal: {str(e)}")
-
+        return web.Response(text='', status=500)
     return web.Response(text='', status=200)
 
 async def submit_swap(request):
     try:
         data = await request.post()
         payload = json.loads(data.get('payload', {}))
+        token = payload['token']
+        user_id = payload['user']['id']
+        
+        # Authorization Check
+        if not _helper.validate_origin(token, _verification_token):
+            message_text = "Failed to validate request, talk to system administrator!"
+            client.chat_postEphemeral(channel=_channel_id, user=user_id, text=message_text)
+            return web.Response(status=401)
 
         # The payload is from a view submission, meaning the "Submit" button was clicked
         if 'type' in payload and payload['type'] == 'view_submission':
@@ -168,6 +180,13 @@ async def process_submission(payload):
         start_time_str_2 = f"{start_date_2}T{start_time_2}:00-05:00"
         end_time_str_2 = f"{end_date_2}T{end_time_2}:00-05:00"
 
+        validation_list = [[author_id, start_time_str_1, end_time_str_1], [target_id, start_time_str_2, end_time_str_2]]
+        
+        if(not _helper.validate_schedule(_helper, validation_list)):
+            message_text = "Invalid dates, make sure to check your input with the schedule! Use (/pagerduty-list) to see the schedule."
+            client.chat_postEphemeral(channel=_channel_id, user=user_id, text=message_text)
+            return None
+        
         # Create overrides for both the author and the target users
         overrides_data = {
             "overrides": [
@@ -199,18 +218,20 @@ async def process_submission(payload):
             # Overrides creation successful
             message_text = "Successfully created override!"
             client.chat_postEphemeral(channel=_channel_id, user=user_id, text=message_text)
+            return web.Response(status=201)
         else:
             # Handle any errors or validation issues with creating the overrides
-            message_text = "Failed to create overrides. Please check the dates and try again."
+            message_text = "Failed to create overrides. Please check your input and try again."
+            logging.error(message_text)
             client.chat_postEphemeral(channel=_channel_id, user=user_id, text=message_text)
 
     except Exception as e:
         # Handle exceptions here, e.g., log the error
-        logging.error(f"Error while creating override: {str(e)}")
+        message_text = f"Error while creating override: {str(e)}"
+        logging.error(message_text)
+        client.chat_postEphemeral(channel=_channel_id, user=user_id, text=message_text)
         return web.Response(status=500)
-
-    # Return a 200 response for other cases
-    return web.Response()
+    
 
 # Define a coroutine function to create overrides asynchronously
 async def create_overrides(overrides_data):
