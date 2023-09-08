@@ -10,8 +10,56 @@ PagerDuty Information at Your Fingertips: Quickly gather important information f
 Effortless Schedule Overrides: When unexpected situations arise that prevent you from being on call, PagerDuty Assistant simplifies the process of creating schedule overrides. Easily create schedule overrides with just a few clicks, ensuring seamless coverage and minimal disruption.
 
 PagerDuty Assistant is your go-to solution for making PagerDuty management a breeze, saving you time and effort so you can focus on what matters most. Say hello to a more efficient on-call experience with PagerDuty Assistant!
+
+## Prerequisites
+
+Before using this bot, ensure that you have the following prerequisites set up:
+
+- Python 3.x installed.
+- The required Python packages installed using `pip install`:
+  - asyncio
+  - json
+  - logging
+  - os
+  - pathlib
+  - dotenv
+  - aiohttp
+  - slack_sdk
+  - slack_user_helper (a custom module include in this repository)
+- A Slack App configured with appropriate permissions and tokens.
+- A PagerDuty account with an API token and the necessary schedule and user configurations.
+
+## Configuration
+
+To use the bot, you need to set up environment variables in a `.env` file. The following environment variables are required:
+
+- `SLACK_TOKEN`: Slack Bot Token for your Slack App.
+- `VERIFICATION_TOKEN`: Slack Verification Token for your Slack App.
+- `PAGERDUTY_TOKEN`: PagerDuty API Token.
+- `SCHEDULE_ID`: PagerDuty Schedule ID.
+- `CHANNEL_ID`: Slack channel ID where the bot will operate.
+
+### Running the Bot
+
+To run the bot, execute the script:
+
+```bash
+python <script_name>.py
+```
+The bot will start an HTTP server listening on 0.0.0.0:80.
 # Documentation
-## API Endpoints
+## Available Endpoints
+
+- `/pagerduty-id`: Retrieves a user's PagerDuty ID and sends it as a response to the user in Slack.
+- `/pagerduty-me`: Provides a user's next shift on the PagerDuty schedule.
+- `/pagerduty-list`: Lists the on-call schedule for the next 3 months.
+- `/pagerduty-swap`: Initiates the process of scheduling a swap with another user.
+- `/submit-swap`: Handles the submission of a schedule swap request.
+
+## Interactive Modals
+
+- The `/pagerduty-swap` endpoint opens an interactive modal for scheduling swaps using data from `modal_payload.json`.
+
 ## Helper Functions
 ## get_pagerduty_id(slack_id)
 This function retrieves a PagerDuty ID for a Slack user based on their Slack user ID.
