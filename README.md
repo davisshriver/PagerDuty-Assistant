@@ -60,51 +60,65 @@ The bot will start an HTTP server listening on 0.0.0.0:80.
 
 - The `/pagerduty-swap` endpoint opens an interactive modal for scheduling swaps using data from `modal_payload.json`.
 
-## Helper Functions
-## get_pagerduty_id(slack_id)
-This function retrieves a PagerDuty ID for a Slack user based on their Slack user ID.
+## SlackUserHelper Class
 
-### Parameters:
+The **SlackUserHelper** class is designed to assist in integrating Slack with PagerDuty for managing on-call schedules and users. It includes several methods for retrieving information and validating data.
 
-slack_id (string): The Slack user ID.
-### Returns:
+### Constructor: `__init__(self, slack_token, pgd_token, schedule_id)`
 
-pagerduty_id (string): The PagerDuty ID of the user, or None if not found.
+- **Description:** Initializes the **SlackUserHelper** object with the necessary credentials and settings for Slack and PagerDuty integration.
+- **Parameters:**
+  - `slack_token` (str): Slack API token.
+  - `pgd_token` (str): PagerDuty API token.
+  - `schedule_id` (str): The ID of the PagerDuty schedule to work with.
 
-## get_oncall_schedules()
-This function retrieves the on-call schedule for all users for the next 3 months.
+### Method: `get_pagerduty_id(self, slack_id)`
 
-### Returns:
+- **Description:** Retrieves the PagerDuty user ID corresponding to a Slack user's ID by matching their email addresses.
+- **Parameters:**
+  - `slack_id` (str): Slack user ID.
+- **Returns:** PagerDuty user ID (str) or `None` if not found.
 
-schedules (list of dicts): A list of on-call schedules for all users. Each schedule entry includes the user's name, start date, and end date.
+### Method: `get_oncall_schedules(self)`
 
-## get_users_on_call_schedule(userId)
-This function retrieves the on-call schedule for a specific Slack user for the next 3 months.
+- **Description:** Retrieves a list of on-call schedules for the specified PagerDuty schedule within the next 90 days.
+- **Returns:** List of on-call schedules, where each schedule is a dictionary containing user information, start date, and end date.
 
-### Parameters:
+### Method: `get_users_on_call_schedule(self, userId)`
 
-userId (string): The PagerDuty ID of the Slack user.
-### Returns:
+- **Description:** Retrieves on-call schedules for a specific user within the next 90 days.
+- **Parameters:**
+  - `userId` (str): PagerDuty user ID.
+- **Returns:** List of on-call schedules for the specified user, or `None` if not found.
 
-schedule (list of dicts): A list of on-call schedules for the specified user. Each schedule entry includes the user's name, start date, and end date.
+### Method: `format_schedule_message(schedules)`
 
-## format_schedule_message(schedules)
-This function formats a list of on-call schedules into a Slack message.
+- **Description:** Formats a list of schedules into a Slack message format.
+- **Parameters:**
+  - `schedules` (list of dict): List of on-call schedules to format.
+- **Returns:** Formatted message (str).
 
-### Parameters:
+### Method: `validate_origin(validation_token, request_token)`
 
-schedules (list of dicts): A list of on-call schedules. Each schedule entry should include the user's name, start date, and end date.
-### Returns:
+- **Description:** Validates the origin of a request by comparing a validation token with a token provided in the request.
+- **Parameters:**
+  - `validation_token` (str): The expected validation token.
+  - `request_token` (str): The token received in the request.
+- **Returns:** `True` if the tokens match, otherwise `False`.
 
-formatted_message (string): A formatted message containing the on-call schedules.
+### Method: `validate_schedule(self, schedule_data)`
 
-## ValidateOrigin(validation_token, request_token)
-This static method validates the origin of a request using a validation token.
+- **Description:** Validates a set of schedules by checking if they are valid within the user's on-call schedule.
+- **Parameters:**
+  - `schedule_data` (list of tuple): List of schedule data, where each tuple contains user ID, start time, and end time.
+- **Returns:** `True` if all schedules are valid, otherwise `False`.
 
-### Parameters:
+### Method: `validate_date_time_range(user_id, start_datetime, end_datetime, user_schedule)`
 
-validation_token (string): The token to validate.
-request_token (string): The token from the incoming request.
-### Returns:
-
-True if the validation is successful, False otherwise.
+- **Description:** Validates if a date and time range is valid within a user's on-call schedule.
+- **Parameters:**
+  - `user_id` (str): PagerDuty user ID.
+  - `start_datetime` (str): Start date and time in ISO format.
+  - `end_datetime` (str): End date and time in ISO format.
+  - `user_schedule` (list of dict): List of on-call schedules for the user.
+- **Returns:** `True` if the date and time range is valid, otherwise `False`.
